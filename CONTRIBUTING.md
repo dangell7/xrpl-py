@@ -68,17 +68,26 @@ poetry run flake8 ./xrpl
 
 ### Running Tests
 
-To run unit tests:
+#### Unit Tests
 
 ```bash
 poetry run python3 -m unittest discover tests/unit
 ```
 
-To run integration tests:
+#### Integration Tests
+
+To run integration tests, you'll need a standalone rippled node running with WS port `6006` and JSON RPC port `5005`. You can run a docker container for this:
+```bash
+docker run -p 5005:5005 -p 6006:6006 -it natenichols/rippled-standalone:latest
+```
+
+To actually run the tests:
 
 ```bash
 poetry run python3 -m unittest discover tests/integration
 ```
+
+#### Running tests with different Python versions
 
 To switch your python version before running tests:
 
@@ -134,8 +143,19 @@ open _build/html/index.html
 5. Create a new Github release/tag off of this branch.
 6. Locally build and download the package.
     1. Pull master locally.
-    2. Locally download the package by running `pip install path/to/local/xrpl-py/dist/.whl`
-    3. Make sure that this local installation works as intended, and that changes are reflected properly
-7. Run `poetry publish --dry-run` and make sure everything looks good
-8. Publish the update by running `poetry publish`
-    * This will require entering PyPI login info
+    2. Run `poetry build` to build the package locally.
+    3. Locally download the package by running `pip install path/to/local/xrpl-py/dist/.whl`.
+    4. Make sure that this local installation works as intended, and that changes are reflected properly.
+7. Run `poetry publish --dry-run` and make sure everything looks good.
+8. Publish the update by running `poetry publish`.
+    * This will require entering PyPI login info.
+9. Send an email to [xrpl-announce](https://groups.google.com/g/xrpl-announce).
+
+## Mailing Lists
+We have a low-traffic mailing list for announcements of new `xrpl-py` releases. (About 1 email every couple of weeks)
+
++ [Subscribe to xrpl-announce](https://groups.google.com/g/xrpl-announce)
+
+If you're using the XRP Ledger in production, you should run a [rippled server](https://github.com/ripple/rippled) and subscribe to the ripple-server mailing list as well.
+
++ [Subscribe to ripple-server](https://groups.google.com/g/ripple-server)

@@ -6,9 +6,72 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [[Unreleased]]
+
+## [1.6.0] - 2022-06-02
+### Added:
+- Support for dynamic fee calculation
+- Add function to parse account balances from a transaction's metadata
+- Better error handling for invalid client URL
+- Exported SubscribeBook
+
 ### Fixed
-- Improved documentation on using websocket clients.
+- Resolve `txnNotFound` error with `send_reliable_submission` when waiting for a submitted malformed transaction
+- Small typing mistake in GenericRequest
+- Fix bug in GenericRequest.to_dict()
+
+## [1.5.0] - 2022-04-25
+### Added
+- Support setting flags with booleans. For each transaction type supporting flags there is a `FlagInterface` to set the flags with booleans.
+- `federator_info` RPC support
+- Helper method for creating a cross-chain payment to/from a sidechain
+- Helper method for parsing an NFTokenID
+
+### Fixed
+- Updated NFT names to match new 1.9.0 rippled names
+- `xrpl.asyncio.clients` exports (now includes `request_to_websocket`, `websocket_to_response`)
+- Adds optional `owner` field to NFTokenBurn
+- Allows lower-case currency codes
+
+## [1.4.0] - 2022-02-24
+### Added
+- Sync and async `generate_faucet_wallet` functions now support a custom
+  faucet host
+
+## [1.3.0] - 2021-12-17
+### Added
+- Support for the [XLS-20 NFT proposal](https://github.com/XRPLF/XRPL-Standards/discussions/46)
+- `xrpl.models.amounts.get_amount_value` helper function
+- `xrpl.utils.str_to_hex` and `xrpl.utils.hex_to_str` helpers
+- `ledger_index` optional param for all the main account methods
+- `TicketCreate` transaction model
+- `GenericRequest` model for unsupported request types
+- Methods to convert between `IssuedCurrency` and `IssuedCurrencyAmount`
+- Support for ints and floats in the `IssuedCurrency` and `IssuedCurrencyAmount` models (and ints for `XRP`)
+- Fixed bug where autofilling using an `xAddress` with `None` in the Destination Tag threw a KeyError
+- `max_fee` and `fee_type` optional params for `get_fee`
+- `autofill`, a new public method that populates the `fee`, `sequence`, and `last_ledger_sequence` fields of a transaction, based on the current state retrieved from the server the Client is connected to. It also converts all X-Addresses to classic addresses.
+- Exports `Transaction`, `Response`, pseudo-transactions at the `xrpl.models` level
+
+### Fixed
+- Improves typing of `Response.result`
+- Makes the default ledger version for `get_next_valid_seq_number` `current` instead of `validated`
+- Stops erroring on non-`tesSUCCESS` responses in reliable transaction submission
+- Removes runtime asserts in websocket clients that were used for type checks only
+- Adds missing top-level `py.typed` file for exceptions and constants
+- Fix issue where unsupported currency codes weren't being correctly processed in the binary codec
+- Fixes issue with UNLModify encoding (due to a bug in rippled)
+- Makes the account delete fee dynamic, based on the ledger's reserve, instead of hard-coded
+- Fee scaling based on load on the ledger
+- Fixes potential issue with conflicting Decimal contexts
+
+## [1.2.0] - 2021-11-09
+### Added
+- Support for Python 3.10
+
+### Fixed
+- Improves documentation on using websocket clients.
 - Fixes an issue sending NoRippleCheck requests
+- Allows projects that use xrpl-py as a dependency to use typing
 
 ## [1.1.1] - 2021-07-02
 ### Fixed

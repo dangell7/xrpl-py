@@ -4,6 +4,7 @@ from xrpl.models.requests.account_channels import AccountChannels
 from xrpl.models.requests.account_currencies import AccountCurrencies
 from xrpl.models.requests.account_info import AccountInfo
 from xrpl.models.requests.account_lines import AccountLines
+from xrpl.models.requests.account_nfts import AccountNFTs
 from xrpl.models.requests.account_objects import AccountObjects, AccountObjectType
 from xrpl.models.requests.account_offers import AccountOffers
 from xrpl.models.requests.account_tx import AccountTx
@@ -13,12 +14,15 @@ from xrpl.models.requests.channel_verify import ChannelVerify
 from xrpl.models.requests.deposit_authorized import DepositAuthorized
 from xrpl.models.requests.fee import Fee
 from xrpl.models.requests.gateway_balances import GatewayBalances
+from xrpl.models.requests.generic_request import GenericRequest
 from xrpl.models.requests.ledger import Ledger
 from xrpl.models.requests.ledger_closed import LedgerClosed
 from xrpl.models.requests.ledger_current import LedgerCurrent
 from xrpl.models.requests.ledger_data import LedgerData
 from xrpl.models.requests.ledger_entry import LedgerEntry
 from xrpl.models.requests.manifest import Manifest
+from xrpl.models.requests.nft_buy_offers import NFTBuyOffers
+from xrpl.models.requests.nft_sell_offers import NFTSellOffers
 from xrpl.models.requests.no_ripple_check import NoRippleCheck, NoRippleCheckRole
 from xrpl.models.requests.path_find import PathFind, PathFindSubcommand
 from xrpl.models.requests.ping import Ping
@@ -33,7 +37,7 @@ from xrpl.models.requests.sign_for import SignFor
 from xrpl.models.requests.submit import Submit
 from xrpl.models.requests.submit_multisigned import SubmitMultisigned
 from xrpl.models.requests.submit_only import SubmitOnly
-from xrpl.models.requests.subscribe import StreamParameter, Subscribe
+from xrpl.models.requests.subscribe import StreamParameter, Subscribe, SubscribeBook
 from xrpl.models.requests.transaction_entry import TransactionEntry
 from xrpl.models.requests.tx import Tx
 from xrpl.models.requests.unsubscribe import Unsubscribe
@@ -43,6 +47,7 @@ __all__ = [
     "AccountCurrencies",
     "AccountInfo",
     "AccountLines",
+    "AccountNFTs",
     "AccountObjects",
     "AccountObjectType",
     "AccountOffers",
@@ -53,12 +58,15 @@ __all__ = [
     "DepositAuthorized",
     "Fee",
     "GatewayBalances",
+    "GenericRequest",
     "Ledger",
     "LedgerClosed",
     "LedgerCurrent",
     "LedgerData",
     "LedgerEntry",
     "Manifest",
+    "NFTBuyOffers",
+    "NFTSellOffers",
     "NoRippleCheck",
     "NoRippleCheckRole",
     "PathFind",
@@ -78,6 +86,7 @@ __all__ = [
     "SubmitOnly",
     "StreamParameter",
     "Subscribe",
+    "SubscribeBook",
     "TransactionEntry",
     "Tx",
     "Unsubscribe",

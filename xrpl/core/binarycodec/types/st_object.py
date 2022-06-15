@@ -23,11 +23,13 @@ from xrpl.core.binarycodec.types.serialized_type import SerializedType
 
 _OBJECT_END_MARKER_BYTE: Final[bytes] = bytes([0xE1])
 _OBJECT_END_MARKER: Final[str] = "ObjectEndMarker"
-_SERIALIZED_DICT: Final[str] = "SerializedDict"
+_ST_OBJECT: Final[str] = "STObject"
 _DESTINATION: Final[str] = "Destination"
 _ACCOUNT: Final[str] = "Account"
 _SOURCE_TAG: Final[str] = "SourceTag"
 _DEST_TAG: Final[str] = "DestinationTag"
+
+_UNL_MODIFY_TX: Final[str] = "0066"
 
 
 def _handle_xaddress(field: str, xaddress: str) -> Dict[str, Union[str, int]]:
@@ -79,23 +81,23 @@ def _enum_to_str(field: str, value: Any) -> Any:
     return value
 
 
-class SerializedDict(SerializedType):
+class STObject(SerializedType):
     """Class for serializing/deserializing Dicts of objects."""
 
     @classmethod
     def from_parser(
-        cls: Type[SerializedDict],
+        cls: Type[STObject],
         parser: BinaryParser,
         _length_hint: Optional[None] = None,
-    ) -> SerializedDict:
+    ) -> STObject:
         """
-        Construct a SerializedDict from a BinaryParser.
+        Construct a STObject from a BinaryParser.
 
         Args:
-            parser: The parser to construct a SerializedDict from.
+            parser: The parser to construct a STObject from.
 
         Returns:
-            The SerializedDict constructed from parser.
+            The STObject constructed from parser.
         """
         from xrpl.core.binarycodec.binary_wrappers.binary_serializer import (
             BinarySerializer,
@@ -110,27 +112,27 @@ class SerializedDict(SerializedType):
 
             associated_value = parser.read_field_value(field)
             serializer.write_field_and_value(field, associated_value)
-            if field.type == _SERIALIZED_DICT:
+            if field.type == _ST_OBJECT:
                 serializer.append(_OBJECT_END_MARKER_BYTE)
 
-        return SerializedDict(bytes(serializer))
+        return STObject(bytes(serializer))
 
     @classmethod
     def from_value(
-        cls: Type[SerializedDict], value: Dict[str, Any], only_signing: bool = False
-    ) -> SerializedDict:
+        cls: Type[STObject], value: Dict[str, Any], only_signing: bool = False
+    ) -> STObject:
         """
-        Create a SerializedDict object from a dictionary.
+        Create a STObject object from a dictionary.
 
         Args:
-            value: The dictionary to construct a SerializedDict from.
+            value: The dictionary to construct a STObject from.
             only_signing: whether only the signing fields should be included.
 
         Returns:
-            The SerializedDict object constructed from value.
+            The STObject object constructed from value.
 
         Raises:
-            XRPLBinaryCodecException: If the SerializedDict can't be constructed
+            XRPLBinaryCodecException: If the STObject can't be constructed
                 from value.
         """
         from xrpl.core.binarycodec.binary_wrappers.binary_serializer import (
@@ -182,6 +184,8 @@ class SerializedDict(SerializedType):
         if only_signing:
             sorted_keys = list(filter(lambda x: x.is_signing, sorted_keys))
 
+        is_unl_modify = False
+
         for field in sorted_keys:
             try:
                 associated_value = field.associated_type.from_value(
@@ -193,18 +197,32 @@ class SerializedDict(SerializedType):
                 # keeps the original stack trace
                 e.args = (f"Error processing {field.name}: {e.args[0]}",) + e.args[1:]
                 raise
-            serializer.write_field_and_value(field, associated_value)
-            if field.type == _SERIALIZED_DICT:
+            if (
+                field.name == "TransactionType"
+                and str(associated_value) == _UNL_MODIFY_TX
+            ):
+                # triggered when the TransactionType field has a value of 'UNLModify'
+                is_unl_modify = True
+            is_unl_modify_workaround = field.name == "Account" and is_unl_modify
+            # true when in the UNLModify pseudotransaction (after the transaction type
+            # has been processed) and working with the Account field
+            # The Account field must not be a part of the UNLModify pseudotransaction
+            # encoding, due to a bug in rippled
+
+            serializer.write_field_and_value(
+                field, associated_value, is_unl_modify_workaround
+            )
+            if field.type == _ST_OBJECT:
                 serializer.append(_OBJECT_END_MARKER_BYTE)
 
-        return SerializedDict(bytes(serializer))
+        return STObject(bytes(serializer))
 
-    def to_json(self: SerializedDict) -> Dict[str, Any]:
+    def to_json(self: STObject) -> Dict[str, Any]:
         """
-        Returns the JSON representation of a SerializedDict.
+        Returns the JSON representation of a STObject.
 
         Returns:
-            The JSON representation of a SerializedDict.
+            The JSON representation of a STObject.
         """
         parser = BinaryParser(str(self))
         accumulator = {}

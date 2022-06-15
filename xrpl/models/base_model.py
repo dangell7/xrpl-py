@@ -3,35 +3,59 @@
 from __future__ import annotations
 
 import json
+import re
 from abc import ABC
 from dataclasses import fields
 from enum import Enum
-from re import split, sub
-from typing import Any, Dict, List, Type, Union, cast, get_type_hints
+from typing import Any, Dict, List, Pattern, Type, Union, cast, get_type_hints
 
-from typing_extensions import get_args, get_origin
+from typing_extensions import Final, get_args, get_origin
 
 from xrpl.models.exceptions import XRPLModelException
 from xrpl.models.required import REQUIRED
+from xrpl.models.types import XRPL_VALUE_TYPE
+
+# this regex splits words based on one of three cases:
+#
+# 1. 1-or-more non-capital chars at the beginning of the string. Handles cases
+# like "value" where the entire string is not capitalized. Would also handle
+# true camelCase instead of PascalCase
+_CAMEL_CASE_LEADING_LOWER: Final[str] = "^[^A-Z]+"
+# 2. 1-or-more capital chars NOT followed by a non-capital char. Handles
+# abbreviated PascalCase values like "URI".
+_CAMEL_CASE_ABBREVIATION: Final[str] = "[A-Z]+(?![^A-Z])"
+# 3. 1 capital char followed by N non-capital-chars. Handles the typical
+# PascalCase like "Amount"
+_CAMEL_CASE_TYPICAL: Final[str] = "[A-Z][^A-Z]*"
+#
+# combining the above together into one regex:
+_CAMEL_TO_SNAKE_CASE_REGEX: Final[Pattern[str]] = re.compile(
+    f"(?:{_CAMEL_CASE_LEADING_LOWER}|{_CAMEL_CASE_ABBREVIATION}|{_CAMEL_CASE_TYPICAL})"
+)
+# used for converting special substrings inside CamelCase fields
+SPECIAL_CAMELCASE_STRINGS = ["NFToken"]
 
 
 def _key_to_json(field: str) -> str:
     """
-    Transforms (upper or lower) camel case to snake case. For example, 'TransactionType'
-    becomes 'transaction_type'.
+    Transforms camelCase or PascalCase to snake_case. For example:
+        1. 'TransactionType' becomes 'transaction_type'
+        2. 'value' remains 'value'
+        3. 'URI' becomes 'uri'
     """
-    words = split(r"(?=[A-Z])", field)
-    lower_words = [word.lower() for word in words if word]
-    snaked = "_".join(lower_words)
-    return sub("u_n_l", "unl", sub("i_d", "id", snaked))
+    # convert all special CamelCase substrings to capitalized strings
+    for spec_str in SPECIAL_CAMELCASE_STRINGS:
+        if spec_str in field:
+            field = field.replace(spec_str, spec_str.capitalize())
+
+    return "_".join(
+        [word.lower() for word in _CAMEL_TO_SNAKE_CASE_REGEX.findall(field)]
+    )
 
 
-def _value_to_json(value: str) -> str:
+def _value_to_json(value: XRPL_VALUE_TYPE) -> XRPL_VALUE_TYPE:
     if isinstance(value, dict):
-        return {
-            _key_to_json(k): _value_to_json(v)
-            for (k, v) in cast(Dict[str, Any], value).items()
-        }
+        return {_key_to_json(k): _value_to_json(v) for (k, v) in value.items()}
     if isinstance(value, list):
         return [_value_to_json(sub_value) for sub_value in value]
     return value
@@ -41,7 +65,7 @@ class BaseModel(ABC):
     """The base class for all model types."""
 
     @classmethod
-    def is_dict_of_model(cls: Type[BaseModel], dictionary: Dict[str, Any]) -> bool:
+    def is_dict_of_model(cls: Type[BaseModel], dictionary: Any) -> bool:
         """
         Checks whether the provided ``dictionary`` is a dictionary representation
         of this class.
@@ -70,7 +94,7 @@ class BaseModel(ABC):
         )
 
     @classmethod
-    def from_dict(cls: Type[BaseModel], value: Dict[str, Any]) -> BaseModel:
+    def from_dict(cls: Type[BaseModel], value: Dict[str, XRPL_VALUE_TYPE]) -> BaseModel:
         """
         Construct a new BaseModel from a dictionary of parameters.
 
@@ -98,9 +122,7 @@ class BaseModel(ABC):
             )
 
         init = cls._get_only_init_args(args)
-        # Ignore type-checking on this for now to simplify subclass constructors
-        # which might pass non kwargs.
-        return cls(**init)  # type: ignore
+        return cls(**init)
 
     @classmethod
     def _from_dict_single_param(
@@ -198,7 +220,7 @@ class BaseModel(ABC):
 
         formatted_dict = {
             _key_to_json(k): _value_to_json(v)
-            for (k, v) in cast(Dict[str, Any], value).items()
+            for (k, v) in cast(Dict[str, XRPL_VALUE_TYPE], value).items()
         }
 
         return cls.from_dict(formatted_dict)
