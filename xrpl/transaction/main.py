@@ -81,7 +81,7 @@ def safe_sign_transaction(
             type fee. Defaults to True.
 
     Returns:
-        The signed transaction blob.
+        The signed transaction.
     """
     return asyncio.run(
         main.safe_sign_transaction(
@@ -118,5 +118,26 @@ def safe_sign_and_autofill_transaction(
             wallet,
             client,
             check_fee,
+        )
+    )
+
+
+def autofill(transaction: Transaction, client: SyncClient) -> Transaction:
+    """
+    Autofills fields in a transaction. This will set `sequence`, `fee`, and
+    `last_ledger_sequence` according to the current state of the server this Client is
+    connected to. It also converts all X-Addresses to classic addresses.
+
+    Args:
+        transaction: the transaction to be signed.
+        client: a network client.
+
+    Returns:
+        The autofilled transaction.
+    """
+    return asyncio.run(
+        main.autofill(
+            transaction,
+            client,
         )
     )

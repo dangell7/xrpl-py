@@ -14,13 +14,12 @@ class TestIssuedCurrency(TestCase):
         )
         self.assertTrue(obj.is_valid())
 
-    def test_correct_lower_currency_code_format(self):
-        # lower case is not allowed
-        with self.assertRaises(XRPLModelException):
-            IssuedCurrency(
-                currency="usd",
-                issuer=_ACCOUNT,
-            )
+    def test_lower_currency_code_format(self):
+        obj = IssuedCurrency(
+            currency="usd",
+            issuer=_ACCOUNT,
+        )
+        self.assertTrue(obj.is_valid())
 
     def test_incorrect_currency_code_format(self):
         # the "+" is not allowed in a currency format"
@@ -68,3 +67,13 @@ class TestIssuedCurrency(TestCase):
                 currency="xrp",
                 issuer=_ACCOUNT,
             )
+
+    def test_to_amount(self):
+        currency = "USD"
+        amount = "12"
+        issued_currency = IssuedCurrency(currency=currency, issuer=_ACCOUNT)
+        issued_currency_amount = issued_currency.to_amount(amount)
+
+        self.assertEqual(issued_currency_amount.currency, currency)
+        self.assertEqual(issued_currency_amount.issuer, _ACCOUNT)
+        self.assertEqual(issued_currency_amount.value, amount)
